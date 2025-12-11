@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>M1 도로 위험도 시각화 테스트</title>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; }
+        #map { position: absolute; top: 0; bottom: 0; width: 100%; }
+        #controls {
+            position: absolute; top: 10px; right: 10px; z-index: 1000;
+            background: white; padding: 15px; border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 250px;
+        }
+        .legend-item { display: flex; align-items: center; margin: 5px 0; }
+        .color-box { width: 20px; height: 5px; margin-right: 10px; }
+        h3 { margin-top: 0; }
+    </style>
+</head>
+<body>
+
+<div id="controls">
+    <h3>🚦 도로 위험도 (M1)</h3>
+    <div>
+        <label>시간대 선택 (0~23시): </label>
+        <input type="number" id="hourInput" value="18" min="0" max="23" style="width: 50px;">
+        <button onclick="loadData()">조회</button>
+    </div>
+    <hr>
+    <div id="status">대기 중...</div>
+    <hr>
+    <h4>범례</h4>
+    <div class="legend-item"><div class="color-box" style="background:#2ecc71;"></div>안전 (낮음)</div>
+    <div class="legend-item"><div class="color-box" style="background:#f1c40f;"></div>주의 (중간)</div>
+    <div class="legend-item"><div class="color-box" style="background:#e74c3c;"></div>위험 (높음)</div>
+    <div class="legend-item"><div class="color-box" style="background:#8b0000;"></div>심각 (매우 높음)</div>
+</div>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+<script>
+    // 1. 지도 초기화 (광안리 중심)
+    var map = L.map('map').setView([35.1532, 129.1185], 14);
+
+    // 배경 지도 (OpenStreetMap)
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> contributors'
+    }).addTo(map);
+
+    var geoJsonLayer = null;
+
+    // 2. 데이터 로드 및 시각화 함수
+    async function loadData() {
+        const hour = document.getElementById('hourInput').value;
+        const statusDiv = document.getElementById('status');
+        
+        statusDiv.innerText = `${hour}시 데이터 로딩 중...`;
+        
+        try {
+            // FastAPI 서버 주소 (로컬 테스트용)
+            // 주의: 실제 서버 포트에 맞춰 수정 필요 (기본 8000)
+            const response = await fetch(`http://localhost:8000/m1/risk?hour=${hour}`);
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const result = await response.json();
+            const roadData = result.data;
+            
+            statusDiv.innerText = `로딩 완료: ${result.count}개 도로`;
+            
+            // 기존 레이어 삭제
+            if (geoJsonLayer) {
+                map.removeLayer(geoJsonLayer);
+            }
+
+            // GeoJSON 데이터 변환
+            const geoJsonFeatures = roadData.map(item => {
+                return {
+                    "type": "Feature",
+                    "properties": {
+                        "name": item.name,
+                        "risk_score": item.risk_score,
+                        "risk_level": item.risk_level
+                    },
+                    "geometry": item.geometry
+                };
+            });
+
+            // 지도에 그리기
+            geoJsonLayer = L.geoJSON(geoJsonFeatures, {
+                style: function(feature) {
+                    return {
+                        color: getColor(feature.properties.risk_score),
+                        weight: 4,
+                        opacity: 0.8
+                    };
+                },
+                onEachFeature: function(feature, layer) {
+                    layer.bindPopup(`
+                        <b>${feature.properties.name || '도로명 없음'}</b><br>
+                        위험도: ${feature.properties.risk_score.toFixed(3)}<br>
+                        등급: ${feature.properties.risk_level}
+                    `);
+                }
+            }).addTo(map);
+
+        } catch (error) {
+            console.error(error);
+            statusDiv.innerText = "에러 발생! (콘솔 확인)";
+            statusDiv.style.color = "red";
+        }
+    }
+
+    // 위험도별 색상
+    function getColor(score) {
+        if (score > 0.8) return '#8b0000'; // DarkRed
+        if (score >= 0.6) return '#e74c3c'; // Red
+        if (score >= 0.4) return '#f1c40f'; // Yellow
+        return '#2ecc71'; // Green
+    }
+
+    // 초기 로딩
+    // loadData(); 
+</script>
+
+</body>
+</html>
+

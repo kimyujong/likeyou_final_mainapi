@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>M2 안심 경로 (Production Mode)</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: 'Noto Sans KR', sans-serif; }
+        .container { display: flex; height: 100vh; flex-direction: column; }
+        .map-area { flex-grow: 1; position: relative; }
+        #map { height: 100%; width: 100%; }
+        
+        /* Floating Search Panel (App-like) */
+        .search-panel {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 400px;
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 10;
+        }
+        .input-group { margin-bottom: 10px; }
+        input { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ddd; border-radius: 5px; }
+        button { 
+            width: 100%; padding: 12px; 
+            background: #007bff; color: white; 
+            border: none; border-radius: 5px; font-weight: bold; cursor: pointer; 
+        }
+        button:hover { background: #0056b3; }
+        #status { margin-top: 10px; font-size: 14px; color: #333; }
+    </style>
+    <!-- 
+      [중요] YOUR_GOOGLE_MAPS_API_KEY를 실제 키로 변경하세요.
+      libraries=places 필수
+    -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCtWutquv5aHcKjhTFhd-bv8xInKgDUeFU&libraries=places"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="map-area">
+            <div id="map"></div>
+            
+            <div class="search-panel">
+                <div class="input-group">
+                    <input id="origin-input" type="text" placeholder="출발지">
+                </div>
+                <div class="input-group">
+                    <input id="dest-input" type="text" placeholder="목적지">
+                </div>
+                <button id="route-btn">안심 경로 찾기</button>
+                <div id="status"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // [설정] 배포 모드 설정
+        // true: 히트맵/CCTV 보임 (디버깅용)
+        // false: 경로만 보임 (실제 사용자용) -> 요청하신 요구사항 반영
+        // =========================================================
+        const DEBUG_MODE = false; 
+        const BASE_URL = "http://localhost:8002/m2"; 
+
+        let map;
+        let routePolyline;
+        let heatmapPolygons = [];
+        let cctvMarkers = [];
+
+        function initMap() {
+            map = new google.maps.Map(document.getElementById("map"), {
+                center: { lat: 35.1532, lng: 129.1186 }, // 광안리
+                zoom: 15,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                zoomControl: false // 앱 느낌 나게 최소화
+            });
+
+            // Autocomplete
+            initAutocomplete();
+
+            // 디버그 모드일 때만 시각화 데이터 로드
+            if (DEBUG_MODE) {
+                loadHeatmap();
+                loadCCTV();
+            } else {
+                console.log("Production Mode: 히트맵과 CCTV 시각화를 숨깁니다.");
+            }
+        }
+
+        function initAutocomplete() {
+            const originInput = document.getElementById("origin-input");
+            const destInput = document.getElementById("dest-input");
+            
+            // Default Values
+            originInput.value = "대한민국 부산광역시 수영구 광안해변로 326"; 
+            destInput.value = "대한민국 부산광역시 수영구 남천동 148-4";
+
+            new google.maps.places.Autocomplete(originInput);
+            new google.maps.places.Autocomplete(destInput);
+        }
+
+        async function loadCCTV() {
+            try {
+                const res = await fetch(`${BASE_URL}/cctv`);
+                const json = await res.json();
+                if (json.success) {
+                    json.data.forEach(cctv => {
+                        const marker = new google.maps.Marker({
+                            position: { lat: cctv.lat, lng: cctv.lon },
+                            map: map,
+                            icon: {
+                                path: google.maps.SymbolPath.CIRCLE,
+                                scale: 4,
+                                fillColor: "#0000FF",
+                                fillOpacity: 1.0,
+                                strokeColor: "white",
+                                strokeWeight: 1
+                            }
+                        });
+                        
+                        // Event Listener도 디버그 모드에서만 생성됨 (함수 호출 자체가 안되므로)
+                        const infoWindow = new google.maps.InfoWindow({
+                            content: `CCTV Density: ${cctv.density}`
+                        });
+                        marker.addListener("mouseover", () => infoWindow.open(map, marker));
+                        marker.addListener("mouseout", () => infoWindow.close());
+                    });
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        async function loadHeatmap() {
+            try {
+                const res = await fetch(`${BASE_URL}/heatmap`);
+                const json = await res.json();
+                if (json.success) {
+                    const r = 0.0003; 
+                    json.data.forEach(item => {
+                        if (item.density <= 10) return; // 너무 낮은 건 안 그림
+
+                        const hexCoords = getHexagonCoords({lat: item.lat, lng: item.lon}, r);
+                        let color = "#FF0000";
+                        let opacity = 0.1;
+                        
+                        if (item.density > 80) opacity = 0.6;
+                        else if (item.density > 30) opacity = 0.3;
+
+                        const poly = new google.maps.Polygon({
+                            paths: hexCoords,
+                            strokeWeight: 0,
+                            fillColor: color,
+                            fillOpacity: opacity,
+                            map: map,
+                            clickable: false
+                        });
+                        heatmapPolygons.push(poly);
+                    });
+                }
+            } catch(e) { console.error(e); }
+        }
+
+        function getHexagonCoords(center, radiusDeg) {
+            const coords = [];
+            for (let i = 0; i < 6; i++) {
+                const angle_deg = 30 + (60 * i);
+                const angle_rad = (Math.PI / 180) * angle_deg;
+                const lon_scale = 1.216;
+                const dLat = radiusDeg * Math.sin(angle_rad); 
+                const dLng = radiusDeg * Math.cos(angle_rad) * lon_scale; 
+                coords.push({ lat: center.lat + dLat, lng: center.lng + dLng });
+            }
+            return coords;
+        }
+
+        async function calculateRoute() {
+            const originInput = document.getElementById("origin-input");
+            const destInput = document.getElementById("dest-input");
+            const statusDiv = document.getElementById("status");
+            const geocoder = new google.maps.Geocoder();
+
+            statusDiv.innerText = "경로 계산 중...";
+
+            try {
+                const originLoc = await getCoordinates(geocoder, originInput.value);
+                const destLoc = await getCoordinates(geocoder, destInput.value);
+
+                if (!originLoc || !destLoc) {
+                    statusDiv.innerText = "주소를 찾을 수 없습니다.";
+                    return;
+                }
+
+                const response = await fetch(`${BASE_URL}/route`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ origin: originLoc, destination: destLoc })
+                });
+                
+                const result = await response.json();
+
+                if (result.success) {
+                    if (routePolyline) routePolyline.setMap(null);
+
+                    const pathCoordinates = result.path.map(c => ({ lat: c.lat, lng: c.lng }));
+
+                    routePolyline = new google.maps.Polyline({
+                        path: pathCoordinates,
+                        geodesic: true,
+                        strokeColor: "#007bff", // 파란색 (앱 테마색)
+                        strokeOpacity: 1.0,
+                        strokeWeight: 6,
+                        map: map
+                    });
+
+                    // 줌/센터 조정
+                    const bounds = new google.maps.LatLngBounds();
+                    pathCoordinates.forEach(c => bounds.extend(c));
+                    map.fitBounds(bounds);
+
+                    statusDiv.innerHTML = `
+                        <strong>✅ 경로 계산 완료</strong><br>
+                        🚶 약 <span style="color:#007bff; font-weight:bold; font-size:1.1em;">${result.info.duration_min}분</span> 소요<br>
+                        📏 총 거리: ${result.info.distance.toFixed(0)}m
+                    `;
+                } else {
+                    statusDiv.innerText = "경로 계산 실패: " + result.error;
+                }
+            } catch(e) {
+                statusDiv.innerText = "에러 발생";
+                console.error(e);
+            }
+        }
+
+        function getCoordinates(geocoder, address) {
+            return new Promise((resolve) => {
+                geocoder.geocode({ address: address }, (results, status) => {
+                    if (status === "OK" && results[0]) {
+                        const loc = results[0].geometry.location;
+                        resolve({ lat: loc.lat(), lng: loc.lng() });
+                    } else resolve(null);
+                });
+            });
+        }
+
+        window.onload = initMap;
+        document.getElementById("route-btn").addEventListener("click", calculateRoute);
+    </script>
+</body>
+</html>
+

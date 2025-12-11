@@ -1,0 +1,18 @@
+# Web Framework
+fastapi
+uvicorn
+pydantic
+
+# Data Processing
+pandas
+numpy
+
+# Map & Graph (M2 Specific)
+networkx
+osmnx
+scipy
+
+# Database & Environment
+supabase
+python-dotenv
+

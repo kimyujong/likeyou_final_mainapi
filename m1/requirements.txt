@@ -1,0 +1,7 @@
+pandas
+geopandas
+shapely
+uvicorn
+fastapi
+python-dotenv
+supabase
