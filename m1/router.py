@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Query
-from service import get_risk_by_hour
-from schemas import RiskResponse
+from .service import get_risk_by_hour
+from .schemas import RiskResponse
 
 router = APIRouter(prefix="/m1", tags=["m1"])
 

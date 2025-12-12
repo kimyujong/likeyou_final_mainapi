@@ -6,8 +6,8 @@ import cv2
 import numpy as np
 from datetime import datetime
 
-from constants import FallStatus, DEFAULT_CONFIRM_FRAMES
-from utils import is_fallen
+from .constants import FallStatus, DEFAULT_CONFIRM_FRAMES
+from .utils import is_fallen
 
 
 class FallDetector:

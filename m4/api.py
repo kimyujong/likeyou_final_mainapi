@@ -7,12 +7,12 @@ import numpy as np
 import asyncio
 import os
 
-from model import YOLOPoseModel
-from detector import FallDetector
-from alert import FallAlertSystem
-from constants import DEFAULT_CONFIRM_FRAMES
-from database import save_fall_event
-from processor import VideoProcessorM4
+from .model import YOLOPoseModel
+from .detector import FallDetector
+from .alert import FallAlertSystem
+from .constants import DEFAULT_CONFIRM_FRAMES
+from .database import save_fall_event
+from .processor import VideoProcessorM4
 
 
 class M4FallDetectionAPI:

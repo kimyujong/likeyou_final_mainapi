@@ -22,8 +22,8 @@ from dotenv import load_dotenv
 # 현재 위치(package/M4)가 아닌 상위 패키지 접근을 위해 sys.path 설정 필요
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from api import M4FallDetectionAPI
-from database import get_db
+from .api import M4FallDetectionAPI
+from .database import get_db
 
 # 로깅 설정
 logging.basicConfig(
@@ -106,7 +106,7 @@ async def startup_event():
         # DB에서 유효한 CCTV ID 조회
         cctv_no = "CCTV-03" # 기본값 (DB 연결 실패 시)
         if db.is_enabled():
-            from database import get_test_cctv_no
+            from .database import get_test_cctv_no
             fetched_id = await get_test_cctv_no()
             if fetched_id:
                 cctv_no = fetched_id
@@ -188,7 +188,7 @@ async def health_check():
 async def get_recent_events(limit: int = 10, cctv_no: Optional[str] = None):
     """최근 낙상 이벤트 조회"""
     try:
-        from database import get_events
+        from .database import get_events
         events = await get_events(limit=limit, cctv_no=cctv_no)
         return {"count": len(events), "data": events}
     except Exception as e:

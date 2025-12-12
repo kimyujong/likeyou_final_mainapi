@@ -10,7 +10,7 @@ sys.path.append(str(project_root))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from main_package.m5.router import router as m5_router
+from m5.router import router as m5_router
 from dotenv import load_dotenv
 
 # [환경변수 설정]

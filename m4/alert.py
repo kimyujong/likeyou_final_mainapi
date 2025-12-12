@@ -3,7 +3,7 @@ M4 낙상 경보 시스템
 """
 
 from datetime import datetime
-from constants import FallStatus, DEFAULT_ALERT_COOLDOWN
+from .constants import FallStatus, DEFAULT_ALERT_COOLDOWN
 
 
 class FallAlertSystem:

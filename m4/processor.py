@@ -10,7 +10,7 @@ import os
 import logging
 import asyncio
 from typing import Optional
-from database import save_fall_event
+from .database import save_fall_event
 
 logger = logging.getLogger(__name__)
 

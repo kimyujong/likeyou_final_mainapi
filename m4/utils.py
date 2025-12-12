@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 from PIL import Image, ImageFont, ImageDraw
 
-from constants import KEYPOINT_INDICES, DEFAULT_FALL_THRESHOLD
+from .constants import KEYPOINT_INDICES, DEFAULT_FALL_THRESHOLD
 
 
 def is_fallen(keypoints, frame_height, threshold=DEFAULT_FALL_THRESHOLD):

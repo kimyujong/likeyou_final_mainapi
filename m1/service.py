@@ -1,7 +1,7 @@
 import pandas as pd
 import geopandas as gpd
 import json
-from loader import get_supabase_client, get_road_geometry
+from .loader import get_supabase_client, get_road_geometry
 
 def get_risk_by_hour(hour: int):
     """
