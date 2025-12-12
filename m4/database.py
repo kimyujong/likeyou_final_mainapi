@@ -14,7 +14,10 @@ from supabase import create_client, Client
 from dotenv import load_dotenv
 
 # 환경변수 로드
-load_dotenv()
+# 현재 패키지(m4)의 상위 폴더(main_package)에 있는 .env 로드
+from pathlib import Path
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 logger = logging.getLogger(__name__)
 

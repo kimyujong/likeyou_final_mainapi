@@ -2,6 +2,7 @@ import os
 import geopandas as gpd
 from supabase import create_client, Client
 from dotenv import load_dotenv
+from pathlib import Path
 
 # 전역 변수로 데이터 캐싱
 _road_geometry = None
@@ -39,7 +40,9 @@ def load_data():
 def get_supabase_client():
     global _supabase_client
     if _supabase_client is None:
-        load_dotenv()
+        # 상위 폴더의 .env 로드
+        env_path = Path(__file__).resolve().parent.parent / '.env'
+        load_dotenv(dotenv_path=env_path)
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
         

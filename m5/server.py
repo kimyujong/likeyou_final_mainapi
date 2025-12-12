@@ -11,19 +11,26 @@ sys.path.append(str(project_root))
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from main_package.m5.router import router as m5_router
+from dotenv import load_dotenv
 
 # [환경변수 설정]
 # 현재 파일(server.py)이 있는 폴더 기준으로 절대 경로 설정
+current_file = Path(__file__).resolve()
 base_dir = current_file.parent
+
+# .env 로드 (상위 폴더)
+env_path = current_file.parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 os.environ["M5_MODEL_DIR"] = str(base_dir / "saved_models")
 os.environ["M5_WEATHER_DATA"] = str(base_dir / "total_weather.xlsx")
 
-# 기상청 API 키 (디코딩된 키) - 필요시 수정하세요
-os.environ["WEATHER_API_KEY"] = "LV9VqydlVHSgjsUjQBB6HzhTyR6Z4XkSzqIfmQzuZaigTc8H5u2iPf7kpxA79doaQq16dxnNCknCZFIxJLftwQ=="
+# 기상청 API 키
+os.environ["WEATHER_API_KEY"] = os.getenv("WEATHER_API_KEY", "")
 
-# [DB 설정] 아래 값을 실제 Supabase 정보로 교체해주세요!
-os.environ["SUPABASE_URL"] = "https://pvuucwvtvszmyfyxoomh.supabase.co"
-os.environ["SUPABASE_KEY"] = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dXVjd3Z0dnN6bXlmeXhvb21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4NDE5NzgsImV4cCI6MjA3ODQxNzk3OH0.9VlllrEPo7Qb6cZYY4BAUzb5PT4TxqbyYgZZxKV7qp0"
+# [DB 설정] Supabase 정보 로드
+os.environ["SUPABASE_URL"] = os.getenv("SUPABASE_URL", "")
+os.environ["SUPABASE_KEY"] = os.getenv("SUPABASE_KEY", "")
 
 app = FastAPI()
 

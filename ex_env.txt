@@ -1,0 +1,12 @@
+SUPABASE_URL=https://pvuucwvtvszmyfyxoomh.supabase.co
+SUPABASE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InB2dXVjd3Z0dnN6bXlmeXhvb21oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjI4NDE5NzgsImV4cCI6MjA3ODQxNzk3OH0.9VlllrEPo7Qb6cZYY4BAUzb5PT4TxqbyYgZZxKV7qp0
+
+GOOGLE_MAPS_API_KEY=AIzaSyCtWutquv5aHcKjhTFhd-bv8xInKgDUeFU
+DEBUG_MODE=True
+
+MODEL_PATH=./m4/best.pt
+TEST_VIDEO_PATH=./m4/test_file/M4_test01.mp4
+
+M5_MODEL_DIR=./m5/saved_models
+M5_WEATHER_DATA=./m5/total_weather.xlsx
+WEATHER_API_KEY=LV9VqydlVHSgjsUjQBB6HzhTyR6Z4XkSzqIfmQzuZaigTc8H5u2iPf7kpxA79doaQq16dxnNCknCZFIxJLftwQ==
