@@ -67,7 +67,7 @@ async def startup_event():
         logger.info("🚀 M4 낙상 감지 API 서버 시작 중...")
         
         # 1. 모델 설정
-        model_path = os.getenv('MODEL_PATH', 'best.pt')  # 기본값: 같은 폴더 내 best.pt
+        model_path = os.getenv('M4_MODEL_PATH', 'best.pt')  # .env 변수명 변경 (MODEL_PATH -> M4_MODEL_PATH)
         
         if not os.path.exists(model_path):
             # 절대 경로로 시도하거나 경고
@@ -96,7 +96,7 @@ async def startup_event():
         # 4. [시뮬레이션] 백그라운드 분석 시작
         # TODO: 실제 시연용 영상 파일 경로로 수정 필수
         # 예: "C:/Users/kyj/Videos/fall_test.mp4"
-        test_video_path = os.getenv('TEST_VIDEO_PATH', 'test_file/M4_test01.mp4')
+        test_video_path = os.getenv('M4_TEST_VIDEO_PATH', 'test_file/M4_test01.mp4') # .env 변수명 변경
         
         # 절대 경로 변환 (테스트용)
         if not os.path.isabs(test_video_path):

@@ -18,7 +18,15 @@ def load_data():
     data_dir = os.path.join(base_dir, "data")
     
     # 도로 지리 데이터 로드 (GeoJSON)
-    geojson_path = os.path.join(data_dir, "roads_cleaned_filtered.geojson")
+    # 1. 환경변수 확인
+    env_path = os.getenv("M1_GEOJSON_PATH")
+    if env_path and os.path.exists(env_path):
+        geojson_path = env_path
+        print(f"[M1] Loading GeoJSON from env: {geojson_path}")
+    else:
+        # 2. 기본 경로 (m1/data)
+        geojson_path = os.path.join(data_dir, "roads_cleaned_filtered.geojson")
+    
     if os.path.exists(geojson_path):
         _road_geometry = gpd.read_file(geojson_path)
         # osmid를 문자열로 통일
