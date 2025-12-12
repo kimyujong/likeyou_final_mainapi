@@ -53,5 +53,5 @@ if __name__ == "__main__":
     print("🚀 Starting M5 Server...")
     # M5 Port: 8004 (Changed from 8000)
     print("📄 Swagger UI: http://localhost:8005/docs")
-    uvicorn.run(app, host="0.0.0.0", port=8005)
+    uvicorn.run("m5.server:app", host="0.0.0.0", port=8005)
 
