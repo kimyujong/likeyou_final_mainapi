@@ -10,7 +10,7 @@ sys.path.append(root_dir)
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from main_package.m2.router import router as m2_router
+from m2.router import router as m2_router
 import uvicorn
 
 app = FastAPI(title="M2 Module Server")
