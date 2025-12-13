@@ -1,5 +1,11 @@
 import sys
 import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+# .env 파일 로드 (상위 폴더)
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 # 현재 파일의 위치: .../package/m2/server.py
 # 패키지 루트(.../package 의 상위)를 sys.path에 추가해야 'package.m2' 모듈을 찾을 수 있음

@@ -2,6 +2,13 @@ import uvicorn
 import sys
 import os
 import asyncio
+from pathlib import Path
+from dotenv import load_dotenv
+
+# .env 파일 로드 (상위 폴더)
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
+
 from fastapi import FastAPI
 # from fastapi.responses import FileResponse  # [테스트용] 주석 처리
 from fastapi.middleware.cors import CORSMiddleware

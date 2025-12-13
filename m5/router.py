@@ -17,9 +17,6 @@ router = APIRouter(
     tags=["m5-population-prediction"]
 )
 
-M5_MODEL_DIR = os.environ.get("M5_MODEL_DIR", "./saved_models")
-M5_WEATHER_DATA = os.environ.get("M5_WEATHER_DATA", "./total_weather.xlsx")
-
 TARGET_REGIONS = [
     26500800, 26500770, 26500660, 26500670, 26350525
 ]
@@ -30,7 +27,15 @@ weather_api_client = None
 def get_predictor():
     global predictor
     if predictor is None:
-        predictor = M5Predictor(M5_MODEL_DIR=M5_MODEL_DIR, M5_WEATHER_DATA=M5_WEATHER_DATA)
+        # 환경 변수를 함수 호출 시점에 로드 (지연 로딩)
+        model_dir = os.environ.get("M5_MODEL_DIR", "./saved_models")
+        weather_path = os.environ.get("M5_WEATHER_DATA", "./total_weather.xlsx")
+        
+        print(f"[M5] Initializing Predictor...")
+        print(f"[M5] Model Dir: {model_dir}")
+        print(f"[M5] Weather Data Path: {weather_path}")
+
+        predictor = M5Predictor(M5_MODEL_DIR=model_dir, M5_WEATHER_DATA=weather_path)
     return predictor
 
 def get_weather_api():

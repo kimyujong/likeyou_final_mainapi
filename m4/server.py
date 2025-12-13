@@ -12,12 +12,11 @@ import logging
 from typing import Optional
 from datetime import datetime
 import traceback
-from pathlib import Path
 
+from pathlib import Path
 from dotenv import load_dotenv
 
-# 환경변수 로드 (최상단)
-# 현재 패키지(m4)의 상위 폴더(main_package)에 있는 .env 로드
+# 환경변수 로드 (최상단으로 이동)
 env_path = Path(__file__).resolve().parent.parent / '.env'
 load_dotenv(dotenv_path=env_path)
 

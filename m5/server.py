@@ -19,7 +19,7 @@ current_file = Path(__file__).resolve()
 base_dir = current_file.parent
 
 # .env 로드 (상위 폴더)
-env_path = current_file.parent.parent / '.env'
+env_path = Path("/home/ubuntu/main-api/.env")
 load_dotenv(dotenv_path=env_path)
 
 # [수정] 환경변수가 있으면 우선 사용하고, 없으면 기본값 사용
