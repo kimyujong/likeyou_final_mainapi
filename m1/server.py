@@ -6,7 +6,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # .env 파일 로드 (상위 폴더)
-env_path = Path(__file__).resolve().parent.parent / '.env'
+# env_path = Path(__file__).resolve().parent.parent / '.env'
+env_path = Path("/home/ubuntu/main-api/.env")
 load_dotenv(dotenv_path=env_path)
 
 from fastapi import FastAPI
