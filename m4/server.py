@@ -12,11 +12,18 @@ import logging
 from typing import Optional
 from datetime import datetime
 import traceback
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+# 환경변수 로드 (최상단)
+# 현재 패키지(m4)의 상위 폴더(main_package)에 있는 .env 로드
+env_path = Path(__file__).resolve().parent.parent / '.env'
+load_dotenv(dotenv_path=env_path)
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from dotenv import load_dotenv
 
 # M4 모듈 import
 # 현재 위치(package/M4)가 아닌 상위 패키지 접근을 위해 sys.path 설정 필요
@@ -31,12 +38,6 @@ logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
 logger = logging.getLogger(__name__)
-
-# 환경변수 로드
-# 현재 패키지(m4)의 상위 폴더(main_package)에 있는 .env 로드
-from pathlib import Path
-env_path = Path(__file__).resolve().parent.parent / '.env'
-load_dotenv(dotenv_path=env_path)
 
 # FastAPI 앱 생성
 app = FastAPI(
