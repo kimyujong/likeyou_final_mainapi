@@ -60,18 +60,26 @@ def load_m5_model(model_dir: str, region_code: int):
     metadata = joblib.load(bundle_path)
 
     # 2. .keras 모델 경로 찾기
-    # 메타데이터에 저장된 경로는 학습 당시의 절대 경로일 수 있으므로, 
-    # 파일명만 추출해서 현재 model_dir에서 찾습니다.
-    original_model_path = Path(metadata["model_path"])
-    model_filename = original_model_path.name
+    # 메타데이터에 저장된 경로는 학습 당시의 절대 경로(예: D:\...)일 수 있음.
+    # 리눅스 환경에서 윈도우 경로 처리를 위해 ntpath 사용
+    import ntpath
+    original_model_path_str = str(metadata["model_path"])
+    model_filename = ntpath.basename(original_model_path_str)
+    
     current_model_path = base_path / model_filename
     
     if not current_model_path.exists():
-        # 혹시 이름이 다를 수 있으니 metadata 경로 그대로도 한번 시도
-        if original_model_path.exists():
-            current_model_path = original_model_path
+        # 1. 원래 경로(Path객체)의 .name 속성으로 재시도 (리눅스 경로였을 경우 대비)
+        p_name = Path(original_model_path_str).name
+        current_model_path_2 = base_path / p_name
+        
+        if current_model_path_2.exists():
+            current_model_path = current_model_path_2
+        # 2. 원래 경로가 절대경로로 존재할 경우 사용
+        elif Path(original_model_path_str).exists():
+             current_model_path = Path(original_model_path_str)
         else:
-            raise FileNotFoundError(f"Keras 모델 파일을 찾을 수 없습니다: {current_model_path}")
+            raise FileNotFoundError(f"Keras 모델 파일을 찾을 수 없습니다.\n현재 경로: {current_model_path}\n저장된 경로: {original_model_path_str}")
 
     # 3. Keras 모델 로드
     model = load_model(
