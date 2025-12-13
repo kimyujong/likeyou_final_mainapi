@@ -17,8 +17,8 @@ router = APIRouter(
     tags=["m5-population-prediction"]
 )
 
-MODEL_DIR = os.environ.get("M5_MODEL_DIR", "./saved_models")
-WEATHER_DATA_PATH = os.environ.get("M5_WEATHER_DATA", "./total_weather.xlsx")
+M5_MODEL_DIR = os.environ.get("M5_MODEL_DIR", "./saved_models")
+M5_WEATHER_DATA = os.environ.get("M5_WEATHER_DATA", "./total_weather.xlsx")
 
 TARGET_REGIONS = [
     26500800, 26500770, 26500660, 26500670, 26350525
@@ -30,7 +30,7 @@ weather_api_client = None
 def get_predictor():
     global predictor
     if predictor is None:
-        predictor = M5Predictor(model_dir=MODEL_DIR, weather_data_path=WEATHER_DATA_PATH)
+        predictor = M5Predictor(M5_MODEL_DIR=M5_MODEL_DIR, M5_WEATHER_DATA=M5_WEATHER_DATA)
     return predictor
 
 def get_weather_api():

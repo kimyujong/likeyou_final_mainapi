@@ -96,12 +96,18 @@ async def startup_event():
         # 4. [시뮬레이션] 백그라운드 분석 시작
         # TODO: 실제 시연용 영상 파일 경로로 수정 필수
         # 예: "C:/Users/kyj/Videos/fall_test.mp4"
-        test_video_path = os.getenv('M4_TEST_VIDEO_PATH', 'test_file/M4_test01.mp4') # .env 변수명 변경
+        test_video_path = os.getenv('M4_TEST_VIDEO_PATH', 'test_file/M4_test01.mp4')
         
-        # 절대 경로 변환 (테스트용)
-        if not os.path.isabs(test_video_path):
+        # [수정] 파일 경로 확인 강화
+        if not os.path.exists(test_video_path):
             current_dir = os.path.dirname(os.path.abspath(__file__))
-            test_video_path = os.path.join(current_dir, test_video_path)
+            abs_path = os.path.join(current_dir, test_video_path)
+            if os.path.exists(abs_path):
+                test_video_path = abs_path
+            else:
+                logger.warning(f"⚠️ Test video not found at: {test_video_path}")
+        
+        logger.info(f"🎥 Test Video Path: {test_video_path}")
         
         # DB에서 유효한 CCTV ID 조회
         cctv_no = "CCTV-03" # 기본값 (DB 연결 실패 시)

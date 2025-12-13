@@ -37,8 +37,8 @@ Ubuntu 22.04는 기본적으로 Python 3.10을 탑재하고 있습니다. P2PNet
 # 시스템 업데이트
 sudo apt update && sudo apt upgrade -y
 
-# 기본 도구 설치
-sudo apt install -y git curl unzip build-essential
+# 기본 도구 및 AWS CLI 설치
+sudo apt install -y git curl unzip build-essential awscli
 
 # Python 버전 관리를 위한 PPA 추가 (deadsnakes)
 sudo add-apt-repository ppa:deadsnakes/ppa
@@ -125,21 +125,58 @@ pip install -r requirements.txt
 *   **경로**: `/home/ubuntu/springboot`
 *   `.jar` 파일은 로컬 빌드 후 아래 "대용량 파일 업로드" 단계를 통해 업로드합니다.
 
-### 3-5. 대용량 파일 및 모델 업로드 (FileZilla / SCP)
-Git에 올리지 않은 대용량 모델 파일(`.pt`, `.h5`)과 데이터 파일(`.xlsx`), 그리고 빌드된 Spring Boot `.jar` 파일을 서버로 전송합니다.
+### 3-5. 대용량 리소스 설정 (AWS S3 활용)
+오토스케일링 및 서버 재구축 시 신속한 복구를 위해 모델 파일과 데이터를 **AWS S3**에 저장하고, 서버 부팅 시 다운로드하도록 구성합니다.
 
-**방법: FileZilla 활용 (추천)**
-1.  **설정**: 프로토콜 `SFTP`, 호스트 `[EC2 IP]`, 사용자 `ubuntu`, 키 파일 `.pem` 선택
-2.  **경로**: `/home/ubuntu` 아래의 각 프로젝트 폴더로 이동
-3.  **업로드 목록**:
+**Step 1: S3 버킷 준비 및 업로드 (내 PC에서 진행)**
+1.  AWS Console > **S3** > **Create bucket** (예: `likeyou-models`)
+2.  로컬에 있는 대용량 파일들을 버킷에 업로드합니다.
+    *   나중에 관리를 위해 `m3`, `m4`, `m5`, `common` 등으로 폴더를 나누어 올리는 것을 권장합니다.
+    *   예시 S3 구조:
+        *   `s3://likeyou-models/m4/best.pt`
+        *   `s3://likeyou-models/m5/saved_models/...`
+        *   `s3://likeyou-models/m5/total_weather.xlsx`
+        *   `s3://likeyou-models/m3/model/...`
+        *   `s3://likeyou-models/jar/app.jar`
 
-| 로컬 파일 위치 | 업로드할 서버 경로 | 설명 |
-| :--- | :--- | :--- |
-| `m4/best.pt` | `/home/ubuntu/main-api/m4/best.pt` | 낙상 감지 모델 |
-| `m5/saved_models/*` | `/home/ubuntu/main-api/m5/saved_models/` | 사고 예측 모델 (폴더 전체) |
-| `m5/total_weather.xlsx` | `/home/ubuntu/main-api/m5/total_weather.xlsx` | 날씨 데이터 |
-| `p2p_repo/m3/model/*.pth` | `/home/ubuntu/p2pnet-api/m3/model/` | P2PNet 모델 |
-| `springboot/app.jar` | `/home/ubuntu/springboot/app.jar` | 백엔드 실행 파일 |
+**Step 2: EC2에 S3 접근 권한 부여 (IAM Role)**
+*Access Key를 서버에 저장하지 않는 보안 모범 사례(Best Practice)입니다.*
+
+1.  AWS Console > **IAM** > **Roles** > **Create role**
+2.  Trusted entity type: **AWS Service** > **EC2** 선택
+3.  Permissions policies: **AmazonS3ReadOnlyAccess** 검색 및 체크
+4.  Role Name: `EC2-S3-Access-Role` 입력 후 생성
+5.  AWS Console > **EC2** > 인스턴스 선택 > **Actions** > **Security** > **Modify IAM role**
+6.  방금 만든 Role 선택 후 **Update IAM role**
+
+**Step 3: 서버에서 리소스 다운로드**
+`/home/ubuntu/storage` 디렉토리에 모든 파일을 모읍니다. (사용자 .env 설정 기준)
+
+```bash
+# 1. 저장소 폴더 생성
+mkdir -p /home/ubuntu/storage
+
+# 2. S3에서 파일 다운로드 (cp 또는 sync 사용)
+# S3 버킷명은 본인의 것으로 변경하세요.
+
+# M4 모델
+aws s3 cp s3://likeyou-models/m4/best.pt /home/ubuntu/storage/
+
+# M5 모델 및 데이터
+aws s3 cp s3://likeyou-models/m5/total_weather.xlsx /home/ubuntu/storage/
+# 폴더(saved_models)는 recursive 옵션 필요. 
+# 주의: S3 폴더 구조에 따라 /home/ubuntu/storage/saved_models/... 로 다운로드 됩니다.
+# 만약 .env에서 M5_MODEL_DIR=/home/ubuntu/storage/ 라고 설정했다면 
+# 실제 모델 파일들이 storage 바로 아래에 있어야 하는지, storage/saved_models 에 있어도 되는지 코드 확인 필요.
+# 여기서는 storage 바로 아래에 모델 파일들을 풉니다.
+aws s3 cp s3://likeyou-models/m5/saved_models/ /home/ubuntu/storage/ --recursive
+
+# M1 데이터 (필요 시)
+aws s3 cp s3://likeyou-models/m1/roads_cleaned_filtered.geojson /home/ubuntu/storage/
+
+# Spring Boot Jar (별도 위치)
+aws s3 cp s3://likeyou-models/jar/app.jar /home/ubuntu/springboot/app.jar
+```
 
 ---
 

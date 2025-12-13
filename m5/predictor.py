@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import random
 import datetime
+import os
 from pathlib import Path
 from .model_loader import load_m5_model
 
@@ -13,20 +14,31 @@ from .weather_api import WeatherAPI
 TARGET_COL = "방문인구"
 
 class M5Predictor:
-    def __init__(self, model_dir: str, weather_data_path: str):
+    def __init__(self, M5_MODEL_DIR: str, M5_WEATHER_DATA: str):
         """
         Args:
-            model_dir (str): saved_models 폴더 경로
-            weather_data_path (str): total_weather.xlsx 파일 경로
+            M5_MODEL_DIR (str): saved_models 폴더 경로
+            M5_WEATHER_DATA (str): total_weather.xlsx 파일 경로
         """
-        self.model_dir = model_dir
-        self.weather_history = pd.read_excel(weather_data_path)
+        self.M5_MODEL_DIR = M5_MODEL_DIR
+        
+        # [수정] 파일 경로 확인
+        if not os.path.exists(M5_WEATHER_DATA):
+            print(f"[M5] Warning: Weather data file not found at '{M5_WEATHER_DATA}'")
+            # fallback: model_dir 내에서 검색
+            alt_path = os.path.join(M5_MODEL_DIR, os.path.basename(M5_WEATHER_DATA))
+            if os.path.exists(alt_path):
+                print(f"[M5] Found at alternative path: '{alt_path}'")
+                M5_WEATHER_DATA = alt_path
+        
+        print(f"[M5] Loading weather data from: {M5_WEATHER_DATA}")
+        self.weather_history = pd.read_excel(M5_WEATHER_DATA)
         self.models = {} # Lazy Loading을 위한 캐시
 
     def get_model(self, region_code: int):
         if region_code not in self.models:
             print(f"[M5] 모델 로딩 중... Region: {region_code}")
-            self.models[region_code] = load_m5_model(self.model_dir, region_code)
+            self.models[region_code] = load_m5_model(self.M5_MODEL_DIR, region_code)
         return self.models[region_code]
 
     def _add_time_signal(self, df):
