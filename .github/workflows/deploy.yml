@@ -1,0 +1,35 @@
+name: Deploy Main API
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: SSH Remote Commands
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "배포 시작: Main API"
+            
+            # 1. 프로젝트 폴더로 이동
+            cd /home/ubuntu/main-api
+            
+            # 2. 최신 코드 받기 (충돌 방지를 위해 reset 후 pull 추천)
+            git fetch --all
+            git reset --hard origin/main
+            
+            # 3. 가상환경 활성화 및 패키지 설치
+            source venv/bin/activate
+            pip install -r requirements.txt
+            
+            # 4. PM2 재시작 (설정 파일은 홈 디렉토리에 있음)
+            # ecosystem.config.js 설정대로 모든 프로세스 재로드
+            pm2 reload /home/ubuntu/ecosystem.config.js
+            
+            echo "배포 완료!"
