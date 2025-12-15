@@ -102,8 +102,21 @@ class VideoProcessorM4:
                     # 너무 빠르면 CPU 점유율이 튀므로 약간 조절
                     await asyncio.sleep(0.005)
                 
-                # 2. 휴식 (Sleep)
-                logger.info(f"💤 {interval_seconds}초 대기...")
+                # 2. 휴식 (Sleep) 및 영상 시간 건너뛰기
+                logger.info(f"💤 {interval_seconds}초 대기 (영상도 {interval_seconds}초 건너뜀)...")
+                
+                # 영상 프레임 포인터 이동 (실시간성 시뮬레이션)
+                current_pos = cap.get(cv2.CAP_PROP_POS_FRAMES)
+                skip_frames = int(fps * interval_seconds)
+                new_pos = current_pos + skip_frames
+                
+                # 영상 길이 초과 시 처음부터 계산
+                total_frames = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+                if new_pos >= total_frames:
+                    new_pos = new_pos % total_frames
+                    
+                cap.set(cv2.CAP_PROP_POS_FRAMES, new_pos)
+                
                 await asyncio.sleep(interval_seconds)
                 
         finally:

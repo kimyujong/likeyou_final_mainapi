@@ -22,6 +22,7 @@ base_dir = current_file.parent
 env_path = Path("/home/ubuntu/main-api/.env")
 load_dotenv(dotenv_path=env_path)
 
+
 # [수정] 환경변수가 있으면 우선 사용하고, 없으면 기본값 사용
 os.environ["M5_MODEL_DIR"] = os.getenv("M5_MODEL_DIR", str(base_dir / "saved_models"))
 os.environ["M5_WEATHER_DATA"] = os.getenv("M5_WEATHER_DATA", str(base_dir / "total_weather.xlsx"))

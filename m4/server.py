@@ -19,7 +19,8 @@ from dotenv import load_dotenv
 # 환경변수 로드 (최상단으로 이동)
 # env_path = Path(__file__).resolve().parent.parent / '.env'
 env_path = Path("/home/ubuntu/main-api/.env")
-load_dotenv(dotenv_path=env_path)
+# load_dotenv(dotenv_path=env_path)
+
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -31,6 +32,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from .api import M4FallDetectionAPI
 from .database import get_db
+from .constants import CCTV_MAPPING  # CCTV 매핑 추가
 
 # 로깅 설정
 logging.basicConfig(
@@ -110,16 +112,14 @@ async def startup_event():
         
         logger.info(f"🎥 Test Video Path: {test_video_path}")
         
-        # DB에서 유효한 CCTV ID 조회
-        cctv_no = "CCTV-03" # 기본값 (DB 연결 실패 시)
+        # DB에서 유효한 CCTV ID 조회 (기본값 설정)
+        # 매핑된 ID가 있으면 그것을 우선 사용
+        default_alias = "CCTV-03"
+        cctv_no = CCTV_MAPPING.get(default_alias, default_alias) 
+        
         if db.is_enabled():
-            from .database import get_test_cctv_no
-            fetched_id = await get_test_cctv_no()
-            if fetched_id:
-                cctv_no = fetched_id
-                logger.info(f"✅ DB에서 테스트용 CCTV ID 확보: {cctv_no}")
-            else:
-                logger.warning("⚠️ COM_CCTV 테이블이 비어있거나 조회 실패. 테스트용 ID 'CCTV-03'을 사용하지만 DB 저장 시 오류가 발생할 수 있습니다.")
+            # DB 연결 시 테스트 로직 (선택 사항)
+            pass
             
         # [수정] 서버 시작 시 자동 실행 제거 (제어 API로 시작)
         # m4_api.start_background_task(test_video_path, cctv_no)
@@ -141,15 +141,25 @@ async def start_analysis(cctv_no: str, video_path: Optional[str] = None):
     if m4_api is None:
         raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다.")
     
+    # CCTV ID 매핑 (Alias -> UUID)
+    real_cctv_no = CCTV_MAPPING.get(cctv_no, cctv_no)
+    if real_cctv_no != cctv_no:
+        logger.info(f"🔄 CCTV ID 매핑: {cctv_no} -> {real_cctv_no}")
+    
     # 임시: video_path가 없으면 기본 테스트 영상 사용
     if not video_path:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         video_path = os.path.join(current_dir, 'test_file/M4_test01.mp4')
         
-    m4_api.start_background_task(video_path=video_path, cctv_no=cctv_no)
+    m4_api.start_background_task(video_path=video_path, cctv_no=real_cctv_no)
     
-    logger.info(f"▶️ 낙상 감지 시작 요청: {cctv_no} (Source: {video_path})")
-    return {"status": "started", "cctv_no": cctv_no, "source": video_path}
+    logger.info(f"▶️ 낙상 감지 시작 요청: {real_cctv_no} (Alias: {cctv_no}, Source: {video_path})")
+    return {
+        "status": "started", 
+        "cctv_no": cctv_no, 
+        "real_cctv_no": real_cctv_no,
+        "source": video_path
+    }
 
 
 @app.post("/control/stop")
@@ -157,10 +167,13 @@ async def stop_analysis(cctv_no: str):
     """
     분석 중지 (On-Demand)
     """
+    # CCTV ID 매핑 (Alias -> UUID)
+    real_cctv_no = CCTV_MAPPING.get(cctv_no, cctv_no)
+    
     if m4_api and hasattr(m4_api, 'processor'):
         m4_api.processor.stop()
-        logger.info(f"⏹️ 분석 중지 요청: {cctv_no}")
-        return {"status": "stopped", "cctv_no": cctv_no}
+        logger.info(f"⏹️ 분석 중지 요청: {real_cctv_no} (Alias: {cctv_no})")
+        return {"status": "stopped", "cctv_no": cctv_no, "real_cctv_no": real_cctv_no}
     
     return {"status": "error", "message": "Processor not active"}
 
@@ -195,8 +208,12 @@ async def health_check():
 async def get_recent_events(limit: int = 10, cctv_no: Optional[str] = None):
     """최근 낙상 이벤트 조회"""
     try:
+        real_cctv_no = None
+        if cctv_no:
+            real_cctv_no = CCTV_MAPPING.get(cctv_no, cctv_no)
+            
         from .database import get_events
-        events = await get_events(limit=limit, cctv_no=cctv_no)
+        events = await get_events(limit=limit, cctv_no=real_cctv_no)
         return {"count": len(events), "data": events}
     except Exception as e:
         logger.error(f"이벤트 조회 실패: {e}")
@@ -205,8 +222,6 @@ async def get_recent_events(limit: int = 10, cctv_no: Optional[str] = None):
 
 if __name__ == "__main__":
     import uvicorn
-    # M4는 8002번 포트 사용 (M3는 8001번)
+    # M4는 8004번 포트 사용
     # 모듈 실행(python -m m4.server) 시 앱 경로를 패키지 경로(m4.server:app)로 지정
     uvicorn.run("m4.server:app", host="0.0.0.0", port=8004, reload=True)
-
-

@@ -43,3 +43,9 @@ DEFAULT_CONFIRM_FRAMES = 10  # 낙상 확정을 위한 연속 프레임 수
 DEFAULT_CONFIDENCE = 0.25  # YOLO 신뢰도 임계값
 DEFAULT_ALERT_COOLDOWN = 5  # 경보 쿨다운 (초)
 
+# CCTV ID 매핑 (사용자 편의용 Alias -> 실제 UUID)
+CCTV_MAPPING = {
+    "CCTV-03": "0868424b-02e1-41ad-84a9-541c0f21f16c",
+    "CCTV-04": "0ae0d27a-55a5-400d-923e-ee738e443eb5"
+}
+

@@ -49,7 +49,7 @@ def get_supabase_client():
     global _supabase_client
     if _supabase_client is None:
         # 상위 폴더의 .env 로드
-        env_path = Path(__file__).resolve().parent.parent / '.env'
+        env_path = Path("/home/ubuntu/main-api/.env")
         load_dotenv(dotenv_path=env_path)
         url = os.getenv("SUPABASE_URL")
         key = os.getenv("SUPABASE_KEY")
