@@ -16,7 +16,8 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             echo "배포 시작: Main API"
-            
+            git config --global --add safe.directory /home/ubuntu/main-api
+
             # 1. 프로젝트 폴더로 이동
             cd /home/ubuntu/main-api
             
