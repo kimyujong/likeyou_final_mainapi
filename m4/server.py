@@ -16,6 +16,18 @@ import traceback
 from pathlib import Path
 from dotenv import load_dotenv
 
+# [핵심 패치] lap 모듈이 없어도 있는 것처럼 속임
+# Ultralytics가 lap을 import하려고 할 때 가짜 모듈을 내어줌
+from unittest.mock import MagicMock
+try:
+    import lap
+except ImportError:
+    try:
+        import lapx as lap
+        sys.modules['lap'] = lap
+    except ImportError:
+        sys.modules['lap'] = MagicMock()
+
 # 환경변수 로드 (최상단으로 이동)
 # env_path = Path(__file__).resolve().parent.parent / '.env'
 env_path = Path("/home/ubuntu/main-api/.env")
