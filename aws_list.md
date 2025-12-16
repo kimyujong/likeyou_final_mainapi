@@ -219,17 +219,29 @@ GPU 서버 IP가 바뀌어도 클라이언트는 메인 도메인만 알면 됩�
 # /etc/nginx/sites-available/likeyou
 
 server {
-    server_name likeyousafe.cloud;
+    listen 80;
     
-    # ... 기존 설정 ...
+    # 1. 메인 API (Spring Boot)
+    location /api {
+        proxy_pass http://localhost:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+    }
 
-    # GPU 서버로 포워딩
-    location /ai/m3 {
-        # GPU 서버의 프라이빗 IP 또는 퍼블릭 IP
-        proxy_pass http://[GPU_SERVER_IP]:8003; 
-        rewrite ^/ai/m3/(.*) /$1 break;  # 경로 재작성 필요 시
+    # 2. 각 모듈별 직접 접근 (테스트용)
+    location /m2 {
+        rewrite ^/m2/(.*) /m2/$1 break; # m2는 prefix가 /m2라 그대로 전달
+        proxy_pass http://localhost:8002;
+    }
+    
+    location /m4 {
+        # m4는 prefix가 없으므로 경로를 지우고 전달해야 함 (/m4/start -> /start)
+        rewrite ^/m4/(.*) /$1 break; 
+        proxy_pass http://localhost:8004;
     }
 }
+
+
 ```
 
 ### 4-2. IP 관리 주의사항

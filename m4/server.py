@@ -17,9 +17,9 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # 환경변수 로드 (최상단으로 이동)
-# env_path = Path(__file__).resolve().parent.parent / '.env'
-env_path = Path("/home/ubuntu/main-api/.env")
-# load_dotenv(dotenv_path=env_path)
+env_path = Path(__file__).resolve().parent.parent / '.env'
+# env_path = Path("/home/ubuntu/main-api/.env")
+load_dotenv(dotenv_path=env_path)
 
 
 from fastapi import FastAPI, HTTPException
@@ -96,34 +96,6 @@ async def startup_event():
         else:
             logger.warning("⚠️ Supabase 미연결 (DB 기능 비활성화)")
             
-        # 4. [시뮬레이션] 백그라운드 분석 시작
-        # TODO: 실제 시연용 영상 파일 경로로 수정 필수
-        # 예: "C:/Users/kyj/Videos/fall_test.mp4"
-        test_video_path = os.getenv('M4_TEST_VIDEO_PATH', 'test_file/M4_test01.mp4')
-        
-        # [수정] 파일 경로 확인 강화
-        if not os.path.exists(test_video_path):
-            current_dir = os.path.dirname(os.path.abspath(__file__))
-            abs_path = os.path.join(current_dir, test_video_path)
-            if os.path.exists(abs_path):
-                test_video_path = abs_path
-            else:
-                logger.warning(f"⚠️ Test video not found at: {test_video_path}")
-        
-        logger.info(f"🎥 Test Video Path: {test_video_path}")
-        
-        # DB에서 유효한 CCTV ID 조회 (기본값 설정)
-        # 매핑된 ID가 있으면 그것을 우선 사용
-        default_alias = "CCTV-03"
-        cctv_no = CCTV_MAPPING.get(default_alias, default_alias) 
-        
-        if db.is_enabled():
-            # DB 연결 시 테스트 로직 (선택 사항)
-            pass
-            
-        # [수정] 서버 시작 시 자동 실행 제거 (제어 API로 시작)
-        # m4_api.start_background_task(test_video_path, cctv_no)
-        
         logger.info("✅ M4 API 초기화 완료! (분석 대기 중: /control/start 호출 필요)")
         
     except Exception as e:
@@ -134,30 +106,50 @@ async def startup_event():
 
 
 @app.post("/control/start")
-async def start_analysis(cctv_no: str, video_path: Optional[str] = None):
+async def start_analysis(cctv_idx: str, video_path: Optional[str] = None):
     """
     특정 CCTV 낙상 감지 시작 (On-Demand)
+    Args:
+        cctv_idx: CCTV 식별자 (DB의 cctv_idx 예: "CCTV_01")
+        video_path: 영상 경로 (선택)
     """
     if m4_api is None:
         raise HTTPException(status_code=503, detail="모델이 로드되지 않았습니다.")
     
-    # CCTV ID 매핑 (Alias -> UUID)
-    real_cctv_no = CCTV_MAPPING.get(cctv_no, cctv_no)
-    if real_cctv_no != cctv_no:
-        logger.info(f"🔄 CCTV ID 매핑: {cctv_no} -> {real_cctv_no}")
+    # CCTV ID 매핑 및 영상 주소 조회 (DB 조회)
+    mapped_cctv_no = cctv_idx
     
+    # UUID 형식이 아닌 경우(예: CCTV_01) DB에서 조회 시도
+    if len(cctv_idx) < 30:  # UUID는 36자
+        db = get_db()
+        if db.is_enabled():
+            cctv_info = await db.get_cctv_info_by_idx(cctv_idx)
+            if cctv_info:
+                mapped_cctv_no = cctv_info['cctv_no']
+                # DB에 저장된 영상 주소가 있고, 요청 파라미터로 video_path가 안 왔다면 DB 값 사용
+                if not video_path and cctv_info.get('stream_url'):
+                    video_path = cctv_info['stream_url']
+                    logger.info(f"✅ DB 영상 주소 사용: {video_path}")
+                
+                logger.info(f"✅ CCTV ID 매핑 성공: {cctv_idx} -> {mapped_cctv_no}")
+            else:
+                logger.warning(f"⚠️ CCTV ID 매핑 실패: {cctv_idx} (DB에 해당 cctv_idx가 없습니다)")
+                # 실패해도 매핑 테이블 시도
+                mapped_cctv_no = CCTV_MAPPING.get(cctv_idx, cctv_idx)
+
     # 임시: video_path가 없으면 기본 테스트 영상 사용
     if not video_path:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         video_path = os.path.join(current_dir, 'test_file/M4_test01.mp4')
+        logger.info(f"⚠️ 기본 영상 경로 사용: {video_path}")
         
-    m4_api.start_background_task(video_path=video_path, cctv_no=real_cctv_no)
+    m4_api.start_background_task(video_path=video_path, cctv_no=mapped_cctv_no)
     
-    logger.info(f"▶️ 낙상 감지 시작 요청: {real_cctv_no} (Alias: {cctv_no}, Source: {video_path})")
+    logger.info(f"▶️ 낙상 감지 시작 요청: {cctv_idx} -> {mapped_cctv_no} (Source: {video_path})")
     return {
         "status": "started", 
-        "cctv_no": cctv_no, 
-        "real_cctv_no": real_cctv_no,
+        "cctv_idx": cctv_idx, 
+        "mapped_id": mapped_cctv_no,
         "source": video_path
     }
 

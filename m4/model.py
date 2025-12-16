@@ -10,7 +10,7 @@ class YOLOPoseModel:
     """
     YOLOv8-pose 모델 로더 및 관리 클래스
     """
-    def __init__(self, model_path='best.pt', device='cuda'):
+    def __init__(self, model_path='yolov8n-pose.pt', device='cuda'):
         """
         Args:
             model_path: YOLO 모델 파일 경로 (.pt)
@@ -26,19 +26,15 @@ class YOLOPoseModel:
         print(f"   모델: {model_path}")
         print(f"   디바이스: {self.device}")
     
-    def predict(self, frame, conf=0.25, verbose=False):
+    def predict(self, frame, conf=0.25, verbose=False, imgsz=1280):
         """
-        프레임에서 포즈 추론
-        
-        Args:
-            frame: OpenCV BGR 이미지
-            conf: 신뢰도 임계값
-            verbose: 상세 출력 여부
-        
-        Returns:
-            results: YOLO 결과 객체
+        프레임에서 포즈 추론 (Tracking 포함)
         """
-        results = self.model(frame, conf=conf, verbose=verbose, device=self.device)
+        # track 모드로 변경하여 객체 ID를 부여받음 (이동 거리 계산용)
+        # persist=True: 프레임 간 ID 유지
+        # [수정] OpenCV GMC 에러 방지를 위해 tracker="bytetrack.yaml" 명시
+        results = self.model.track(frame, conf=conf, verbose=verbose, device=self.device, imgsz=imgsz, 
+                                 persist=True, tracker="bytetrack.yaml")
         return results
     
     def get_keypoints(self, results):
@@ -58,4 +54,3 @@ class YOLOPoseModel:
                 keypoints_list.append(kp.cpu().numpy())
         
         return keypoints_list
-
