@@ -88,9 +88,9 @@ S3에서 모델 파일과 Jar 파일을 다운로드합니다. (IAM Role 권한 
 ```bash
 mkdir -p /home/ubuntu/storage
 # S3 다운로드 예시
-aws s3 cp s3://likeyou-models/m4/best.pt /home/ubuntu/storage/
-aws s3 cp s3://likeyou-models/m5/total_weather.xlsx /home/ubuntu/storage/
-aws s3 cp s3://likeyou-models/jar/app.jar /home/ubuntu/springboot/app.jar
+aws s3 cp s3://likeyou-storage/m4 /home/ubuntu/storage/m4 --recursive
+aws s3 cp s3://likeyou-storage/m5/total_weather.xlsx /home/ubuntu/storage/
+aws s3 cp s3://likeyou-storage/jar/app.jar /home/ubuntu/springboot/app.jar
 ```
 
 ### 2-5. PM2 프로세스 관리 (Server A)
