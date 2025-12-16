@@ -16,8 +16,8 @@ from dotenv import load_dotenv
 # 환경변수 로드
 # 현재 패키지(m4)의 상위 폴더(main_package)에 있는 .env 로드
 from pathlib import Path
-env_path = Path(__file__).resolve().parent.parent / '.env'
-# env_path = Path("/home/ubuntu/main-api/.env")
+# env_path = Path(__file__).resolve().parent.parent / '.env'
+env_path = Path("/home/ubuntu/main-api/.env")
 load_dotenv(dotenv_path=env_path)
 
 logger = logging.getLogger(__name__)

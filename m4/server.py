@@ -17,8 +17,8 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 # 환경변수 로드 (최상단으로 이동)
-env_path = Path(__file__).resolve().parent.parent / '.env'
-# env_path = Path("/home/ubuntu/main-api/.env")
+# env_path = Path(__file__).resolve().parent.parent / '.env'
+env_path = Path("/home/ubuntu/main-api/.env")
 load_dotenv(dotenv_path=env_path)
 
 
