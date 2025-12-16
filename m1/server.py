@@ -21,7 +21,7 @@ sys.path.append(current_dir)
 try:
     from router import router as m1_router
 except ImportError:
-    from .router import router as m1_router
+    from m1.router import router as m1_router
 
 app = FastAPI(title="M1 Road Risk API", version="1.0.0")
 

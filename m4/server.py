@@ -30,9 +30,15 @@ from fastapi.responses import JSONResponse
 # 현재 위치(package/M4)가 아닌 상위 패키지 접근을 위해 sys.path 설정 필요
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from .api import M4FallDetectionAPI
-from .database import get_db
-from .constants import CCTV_MAPPING  # CCTV 매핑 추가
+try:
+    from m4.api import M4FallDetectionAPI
+    from m4.database import get_db
+    from m4.constants import CCTV_MAPPING
+except ImportError:
+    # 혹시 m4 폴더 안에서 직접 실행할 경우를 대비 (fallback)
+    from api import M4FallDetectionAPI
+    from database import get_db
+    from constants import CCTV_MAPPING
 
 # 로깅 설정
 logging.basicConfig(
