@@ -17,7 +17,7 @@ class HeatmapPoint(BaseModel):
     density: int
 
 class CCTVPoint(BaseModel):
-    cctv_no: int
+    cctv_no: str
     lat: float
     lon: float
     density: int
