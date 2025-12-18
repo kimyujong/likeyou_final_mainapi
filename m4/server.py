@@ -234,4 +234,4 @@ if __name__ == "__main__":
     import uvicorn
     # M4는 8004번 포트 사용
     # 모듈 실행(python -m m4.server) 시 앱 경로를 패키지 경로(m4.server:app)로 지정
-    uvicorn.run("m4.server:app", host="0.0.0.0", port=8004, reload=True)
+    uvicorn.run("m4.server:app", host="0.0.0.0", port=8004, reload=False)
