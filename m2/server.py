@@ -51,5 +51,5 @@ if os.path.exists(M2_DIR):
     
 #     # Reload 옵션은 개발 시 코드 수정하면 자동 재시작
 #     # M2 Port: 8003 (Changed from 8000)
-#     uvicorn.run("m2.server:app", host="0.0.0.0", port=8002, reload=True)
+
 

@@ -235,3 +235,4 @@ async def get_recent_events(limit: int = 10, cctv_no: Optional[str] = None):
 #     # M4는 8004번 포트 사용
 #     # 모듈 실행(python -m m4.server) 시 앱 경로를 패키지 경로(m4.server:app)로 지정
 #     uvicorn.run("m4.server:app", host="0.0.0.0", port=8004, reload=True)
+
