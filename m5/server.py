@@ -51,9 +51,9 @@ app.include_router(m5_router)
 def root():
     return {"message": "M5 Prediction API Server is Running!"}
 
-if __name__ == "__main__":
-    print("🚀 Starting M5 Server...")
-    # M5 Port: 8004 (Changed from 8000)
-    print("📄 Swagger UI: http://localhost:8005/docs")
-    uvicorn.run("m5.server:app", host="0.0.0.0", port=8005)
+# if __name__ == "__main__":
+#     print("🚀 Starting M5 Server...")
+#     # M5 Port: 8004 (Changed from 8000)
+#     print("📄 Swagger UI: http://localhost:8005/docs")
+#     uvicorn.run("m5.server:app", host="0.0.0.0", port=8005)
 

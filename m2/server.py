@@ -42,14 +42,14 @@ M2_DIR = BASE_DIR # 현재 파일이 m2 폴더 안에 있으므로 BASE_DIR이 �
 if os.path.exists(M2_DIR):
     app.mount("/view", StaticFiles(directory=M2_DIR), name="view")
 
-if __name__ == "__main__":
-    print("================================================================")
-    print("🚀 M2 서버가 시작됩니다!")
-    print("👉 API 문서: http://localhost:8002/docs")
-    print("👉 테스트 화면: http://localhost:8002/view/test_view.html")
-    print("================================================================")
+# if __name__ == "__main__":
+#     print("================================================================")
+#     print("🚀 M2 서버가 시작됩니다!")
+#     print("👉 API 문서: http://localhost:8002/docs")
+#     print("👉 테스트 화면: http://localhost:8002/view/test_view.html")
+#     print("================================================================")
     
-    # Reload 옵션은 개발 시 코드 수정하면 자동 재시작
-    # M2 Port: 8003 (Changed from 8000)
-    uvicorn.run("m2.server:app", host="0.0.0.0", port=8002, reload=True)
+#     # Reload 옵션은 개발 시 코드 수정하면 자동 재시작
+#     # M2 Port: 8003 (Changed from 8000)
+#     uvicorn.run("m2.server:app", host="0.0.0.0", port=8002, reload=True)
 

@@ -57,9 +57,9 @@ def health_check():
         "model_loaded": True
     }
 
-if __name__ == "__main__":
-    print("Starting M1 Server...")
-    # reload=True는 개발 중에 코드 변경 시 자동 재시작
-    # M1 Port: 8001
-    uvicorn.run("m1.server:app", host="0.0.0.0", port=8001, reload=True)
+# if __name__ == "__main__":
+#     print("Starting M1 Server...")
+#     # reload=True는 개발 중에 코드 변경 시 자동 재시작
+#     # M1 Port: 8001
+#     uvicorn.run("m1.server:app", host="0.0.0.0", port=8001, reload=True)
 
